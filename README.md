@@ -173,7 +173,9 @@ supported datasets.
 
 <details open>
 <summary>(click to collapse)</summary>
+
 * MSR-VTT
+
   * [x] [raw dataset](http://ms-multimedia-challenge.com/2017/dataset)
   * [x] [multi-modal features](http://thoth.inrialpes.fr/research/video-features/)
   * [x] [Resnet152 video features](https://github.com/cshizhe/hgr_v2t)
