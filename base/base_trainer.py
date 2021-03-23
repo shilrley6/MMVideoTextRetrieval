@@ -24,6 +24,7 @@ import logging
 import os
 import re
 import time
+import h5py
 
 from numpy import inf
 from tensorboardX import SummaryWriter
@@ -296,6 +297,47 @@ class BaseTrainer:
     with open(exp_completed_flag_path, 'a'):
       os.utime(exp_completed_flag_path, None)
 
+  def test(self, sentence):
+    """Final evaluation."""
+    sets = 'test'
+    ckpt_path = self.config.save_dir / 'trained_model.pth'
+
+    if os.path.exists(ckpt_path):
+      self._resume_checkpoint(ckpt_path)
+    else:
+      msg = (f'The checkpoint {ckpt_path} does not exist and cannot be loaded. '
+             f'The model will not be resumed to that checkpoint.')
+      logger.info(msg)
+
+    self.reading_from = "mult_h5"
+    self.cache_dir = os.path.join(os.path.dirname(self.config.demo_dir), "vid_feat_files",
+                                  self.reading_from)
+    vid_list_path = "train_list_jsfusion.txt"
+    vid_list_path = os.path.join(self.config.demo_dir, vid_list_path)
+    self.sentence = sentence
+
+    with open(vid_list_path) as f:
+      vid_list = f.readlines()
+      for i in range(len(vid_list)):
+        vid = vid_list[i]
+        output_basename = f"{vid[0]}/{vid[1]}/{vid[2]}/{vid}"
+        output_basename = output_basename[:-1] + '.h5'
+        dataset_file_path = os.path.join(self.cache_dir, output_basename)
+
+        with h5py.File(dataset_file_path, "r+") as dataset_file:
+          nb_captions = len([k for k in dataset_file.keys() if k.startswith("raw_captions.")])
+
+          for j in range(nb_captions):
+            try:
+              del dataset_file[f"raw_captions.{j}"]
+            except:
+              print(f"raw_captions.{j}" + "already deleted")
+            dt = h5py.special_dtype(vlen=str)
+            dataset_file.create_dataset(f"raw_captions.{j}", data=self.sentence, dtype=dt)
+
+    final_result = self._valid_epoch(epoch=self.epoch, sets=sets)
+    return final_result
+
   def purge_stale_checkpoints(self):
     """Remove checkpoints that are no longer neededself.
 
@@ -407,16 +449,16 @@ class BaseTrainer:
 
   def _resume_checkpoint(self, resume_path):
     """Resume from saved checkpoints."""
-    resume_path = str(resume_path)
-    logger.info('Loading checkpoint from: %s ...', resume_path)
-    checkpoint = torch.load(resume_path, map_location=self.device)
+    self.resume_path = str(resume_path)
+    logger.info('Loading checkpoint from: %s ...', self.resume_path)
+    checkpoint = torch.load(self.resume_path, map_location=self.device)
     self.loaded_epoch = checkpoint['epoch']
     self.epoch = checkpoint['epoch']
     self.start_epoch = checkpoint['epoch'] + 1
     self.n_samples = checkpoint['n_samples']
     self.n_steps = checkpoint['n_steps']
 
-    exp_dir_src = os.path.dirname(resume_path)
+    exp_dir_src = os.path.dirname(self.resume_path)
     restart = exp_dir_src == str(self.exp_dir)
 
     # load architecture params from checkpoint.
@@ -458,7 +500,7 @@ class BaseTrainer:
 
       # Log the path of the checkpoint that was loaded
       with open(self.info_checkpoint_path, 'a') as f:
-        f.write(f"This experiment is based on the checkpoint {resume_path}"
+        f.write(f"This experiment is based on the checkpoint {self.resume_path}"
                 f"loaded at epoch {checkpoint['epoch']}")
 
     logger.info('Ckpt loaded at epoch %s.', str(checkpoint['epoch']))
