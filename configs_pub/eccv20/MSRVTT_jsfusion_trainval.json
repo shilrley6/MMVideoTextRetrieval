@@ -138,6 +138,29 @@
             }
         }
     ],
+    "test_sets": [
+        {
+            "type": "ExpertDataLoader",
+            "args": {
+                "mix": [
+                    {
+                        "dataset_name": "MSRVTT",
+                        "cut_name": "jsfusion",
+                        "split_name": "trainval",
+                        "data_dir": "/youtu_pedestrian_detection/wenzhewang/mmt_data/MSRVTT_demo/symlinked-feats",
+                        "captions_per_video": 1,
+                        "query_shuffling": "indiv",
+                        "temporal_encoding_window": 1,
+                        "max_text_words": 30,
+                        "max_expert_tokens": 30
+                    }
+                ],
+                "batch_size": 512,
+                "num_workers": 128,
+                "pin_memory": false
+            }
+        }
+    ],
     "optimizer": {
         "type": "Adam",
         "args": {
@@ -179,8 +202,9 @@
         "verbosity": 2,
         "tensorboard": true,
         "monitor": "max epoch",
-        "save_dir": "/youtu_pedestrian_detection/wenzhewang/mmt_save_dir",
-        "external_save_dir": "/youtu_pedestrian_detection/wenzhewang/mmt_save_dir_external"
+        "save_dir": "/youtu_pedestrian_detection/wenzhewang/mmt_icme/mmt_save_dir",
+        "external_save_dir": "/youtu_pedestrian_detection/wenzhewang/mmt_icme/mmt_save_dir_external",
+        "demo_dir": "/youtu_pedestrian_detection/wenzhewang/mmt_data/MSRVTT_demo/symlinked-feats"
     },
     "cross_seed": 0,
     "exp_name":"jsfusion_baseline"
