@@ -1,0 +1,36 @@
+name: mmt_edit_base
+
+worker_num: 1
+gpu_num_per_worker: 1
+
+#机智平台上的业务标示, 通过rpf-jcli query 的 free_gpu 查看业务当前空余资源
+jizhi_business: youtu_lowsource_chongqing
+
+dataset: youtu_pedestrian_detection-rw
+
+#使用的镜像名字,参考 https://git.code.oa.com/yt-rapidflow/docker_images
+image_full_name: "mirrors.tencent.com/rpf/pytorch:1.5.0"
+
+# 任务结束后是否释放资源，对于调试任务保留现场，设置为True
+release_ip: True
+
+# ------------
+# lightrun 启动命令配置 参考： https://git.code.oa.com/yt-rapidflow/lightrun
+## 日志存储目录, 对于微信集群 设置为 task_out
+log_dir: /youtu_pedestrian_detection/wenzhewang/mmt_icme/mmt_edit/logs
+#log_level: INFO
+
+## 自定义环境变量
+envs:
+  - "NCCL_DEBUG=INFO"
+  - "NCCL_DEBUG_SUBSYS=INIT"
+  - "PORT=$MASTER_PORT"
+
+## command 执行方式  mpi, hvd, rpf_mpi, multi_node, multi_gpu
+template: multi_node
+
+## 训练执行命令
+command:
+  - "python3 -m demo --config configs_pub/eccv20/MSRVTT_jsfusion_trainval.json --only_eval --load_checkpoint /youtu_pedestrian_detection/wenzhewang/mmt_icme/mmt_save_dir/trained_model.pth --sentence"
+#  - "python3 -m train --config configs_pub/eccv20/MSRVTT_jsfusion_trainval.json"
+#  - "python3 -m demo --config configs_pub/eccv20/MSRVTT_jsfusion_trainval.json"

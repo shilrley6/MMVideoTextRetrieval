@@ -63,6 +63,11 @@ class ConfigParser:
     else:
       self.only_eval = False
 
+    if args.sentence:
+      self.sentence = True
+    else:
+      self.sentence = False
+
     # load config file and apply custom cli options
     config = read_json(self.cfg_fname)
     self._config = _update_config(config, options, args)
@@ -80,7 +85,14 @@ class ConfigParser:
       save_dir = pathlib.Path.cwd() / 'exps' / exper_name
       self._config['trainer']['save_dir'] = str(save_dir)
 
+    if 'demo_dir' in self.config['trainer'].keys():
+      demo_dir = pathlib.Path(self.config['trainer']['demo_dir'])
+    else:
+      demo_dir = pathlib.Path.cwd() / 'exps' / exper_name
+      self._config['trainer']['demo_dir'] = str(demo_dir)
+
     self._save_dir = save_dir
+    self._demo_dir = demo_dir
     self._log_dir = save_dir
     self._web_dirs = [save_dir / 'visualisations']
     self._exper_name = exper_name
@@ -99,6 +111,7 @@ class ConfigParser:
 
     self.save_dir.mkdir(parents=True, exist_ok=True)
     self.log_dir.mkdir(parents=True, exist_ok=True)
+    self.demo_dir.mkdir(parents=True, exist_ok=True)
 
     logpath = save_dir / 'log.txt'
     if args.verbose:
@@ -162,6 +175,10 @@ class ConfigParser:
   @property
   def log_dir(self):
     return self._log_dir
+
+  @property 
+  def demo_dir(self):
+    return self._demo_dir
 
   @property
   def exper_name(self):
