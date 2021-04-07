@@ -29,6 +29,7 @@ import data_loader.data_loaders as module_data
 import model.loss as module_loss
 import model.metric as module_metric
 import model.model as module_arch
+import model.model_mmt2 as module_arch2
 import numpy as np
 from parse_config import ConfigParser
 import torch
@@ -84,12 +85,20 @@ def train(config, sentence):
           ))
 
   # Setup the cross-modal architecture
-  model = config.init(
-      name="arch",
-      module=module_arch,
-      expert_dims=expert_dims,
-      tokenizer=tokenizer,
-  )
+  if config.modified_model:
+      model = config.init(
+          name="arch",
+          module=module_arch2,
+          expert_dims=expert_dims,
+          tokenizer=tokenizer,
+      )
+  else:
+      model = config.init(
+          name="arch",
+          module=module_arch,
+          expert_dims=expert_dims,
+          tokenizer=tokenizer,
+      )
 
   loss = config.init(name="loss", module=module_loss)
   metrics = [getattr(module_metric, met) for met in config["metrics"]]
@@ -129,7 +138,9 @@ def train(config, sentence):
                                                    False),
       expert_dims=expert_dims,
       tokenizer=tokenizer,
-      warmup_iterations=warmup_iterations)
+      warmup_iterations=warmup_iterations,
+      modal_num = config.modal_num
+  )
 
   if not config.only_eval:
     logger.info("Training ...")
@@ -174,6 +185,7 @@ def main_train(raw_args=None):
   parser.add_argument("--device", type=str, help="indices of GPUs to enable")
   parser.add_argument("--only_eval", action="store_true")
   parser.add_argument("--sentence", action="store_true")
+  parser.add_argument("--modified_model", action="store_true")
   parser.add_argument("-v",
                       "--verbose",
                       help="increase output verbosity",

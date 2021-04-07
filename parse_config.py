@@ -68,6 +68,13 @@ class ConfigParser:
     else:
       self.sentence = False
 
+    if args.modified_model:
+      self.modified_model = True
+      self.modal_num = 8
+    else:
+      self.modified_model = False
+      self.modal_num = 7
+
     # load config file and apply custom cli options
     config = read_json(self.cfg_fname)
     self._config = _update_config(config, options, args)
