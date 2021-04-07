@@ -225,17 +225,27 @@ pip install -r requirements.txt
 Training + evaluation:
 
 ```
-python -m train --config configs/$model_name/$dataset_$split_trainval.json
+python -m demo --config configs/$model_name/$dataset_$split_trainval.json
 ```
 
 Evaluation from checkpoint:
 
 ```
-python -m train --config configs/$model_name/$dataset_$split_trainval.json --only_eval --load_checkpoint $checkpoint_path
+python -m demo --config configs/$model_name/$dataset_$split_trainval.json --only_eval --load_checkpoint $checkpoint_path
 ```
 
 Training from pretrained model:
 
 ```
-python -m train --config configs/$model_name/prtrn_$dataset_$split_trainval.json --load_checkpoint $checkpoint_path
+python -m demo --config configs/$model_name/prtrn_$dataset_$split_trainval.json --load_checkpoint $checkpoint_path
+```
+
+Retrieval videos with a specific sentence:
+```
+python -m demo --config configs/$model_name/$dataset_$split_trainval.json --only_eval --load_checkpoint $checkpoint_path --sentence
+```
+
+Using the modified version of MMT for training:
+```
+python -m demo --config configs/$model_name/prtrn_$dataset_$split_trainval.json --modified_model
 ```
