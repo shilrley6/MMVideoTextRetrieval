@@ -31,6 +31,6 @@ template: multi_node
 
 ## 训练执行命令
 command:
-  - "python3 -m demo --config configs_pub/eccv20/MSRVTT_jsfusion_trainval.json --only_eval --load_checkpoint /youtu_pedestrian_detection/wenzhewang/mmt_icme/mmt_save_dir/trained_model.pth --sentence"
+#  - "python3 -m demo --config configs_pub/eccv20/MSRVTT_jsfusion_trainval.json --only_eval --load_checkpoint /youtu_pedestrian_detection/wenzhewang/mmt_icme/mmt_save_dir/trained_model.pth --sentence"
 #  - "python3 -m train --config configs_pub/eccv20/MSRVTT_jsfusion_trainval.json"
-#  - "python3 -m demo --config configs_pub/eccv20/MSRVTT_jsfusion_trainval.json"
+  - "python3 -m demo --config configs_pub/eccv20/MSRVTT_jsfusion_trainval.json"

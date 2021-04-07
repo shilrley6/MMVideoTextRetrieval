@@ -22,6 +22,7 @@ import collections
 import logging
 import pathlib
 import time
+import datetime
 
 from base import BaseTrainer
 from model.model import sharded_cross_view_inner_product
@@ -73,11 +74,13 @@ class Trainer(BaseTrainer):
                expert_dims,
                num_keep_ckpts=1,
                tokenizer=None,
-               warmup_iterations=-1):
+               warmup_iterations=-1,
+               modal_num=7):
     super().__init__(model, loss, metrics, optimizer, lr_scheduler, config)
     self.config = config
     self.data_loaders = data_loaders
     self.num_keep_ckpts = num_keep_ckpts
+    self.modal_num = modal_num
     self.train_loaders = [
         lo["loader"] for lo in self.data_loaders["train_sets"]
     ]
@@ -99,6 +102,8 @@ class Trainer(BaseTrainer):
     self.n_pairs = self.train_datasets[0].n_pairs
 
     self.modalities = list(expert_dims.keys())
+    if self.modal_num == 8:
+      self.modalities.append("total")
 
     cfg_trainer = config["trainer"]
     self.max_samples_per_epoch = cfg_trainer["max_samples_per_epoch"]
@@ -436,6 +441,35 @@ class Trainer(BaseTrainer):
               self.exp_dir) / f"{dataset_basename}-{split_name}-sims.npy"
           np.save(sims_path, sims_data)
           logger.info("Saved similarity matrix to %s", str(sims_path))
+
+        if sets == 'test':
+          vid_path = self.config['trainer']['demo_dir'] + '/train_list_jsfusion.txt'
+          fd = open(vid_path, "r")
+          vid_list = list(fd)
+          similar = sims.copy()
+          for i in range(len(vid_list)):
+            vid_list[i] = vid_list[i].replace('\n', '')
+          for i in range(similar.shape[0]):
+            max_t = np.max(similar[i])
+            min_t = np.min(similar[i])
+            for j in range(similar.shape[0]):
+              similar[i, j] = (similar[i, j] - min_t) / (max_t - min_t)
+
+          sims_diag = similar.sum(axis=0)
+          order = np.arange(similar.shape[0])
+
+          sims_sort = np.argsort(-sims_diag)
+          order = order[sims_sort]
+
+          best_len = 10
+          curr_time = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M")
+          results_path = self.config['trainer']['save_dir'] + '/best_similar/search_' + curr_time +  '.txt'
+          results = open(results_path, 'a')
+          for i in range(best_len):
+            results.write(str(vid_list[order[i]]))
+            results.write('\n')
+          results.close()
+          fd.close()
 
         nested_metrics = {}
         self.timer.update("valid.conf_mat", time.time() - conf_mat_start)

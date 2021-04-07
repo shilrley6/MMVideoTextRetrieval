@@ -247,6 +247,7 @@ def sharded_cross_view_inner_product(vid_embds,
   norm_weights[norm_weights == 0] = 1E-5
   moe_weights = th.div(moe_weights, norm_weights)
 
+  print(list(moe_weights.size()), b, num_caps, m)
   assert list(moe_weights.size()) == [b * num_caps, b, m]
 
   for idx, mod in enumerate(subspaces):
