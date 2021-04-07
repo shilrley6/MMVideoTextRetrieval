@@ -23,11 +23,13 @@ import logging
 import os
 import random
 import time
+import datetime
 
 import data_loader.data_loaders as module_data
 import model.loss as module_loss
 import model.metric as module_metric
 import model.model as module_arch
+import model.model_mmt2 as module_arch2
 import numpy as np
 from parse_config import ConfigParser
 import torch
@@ -40,7 +42,7 @@ import utils.visualizer as module_vis
 logger = logging.getLogger(__name__)
 
 
-def train(config):
+def train(config, sentence):
   """Cross-modal architecture training."""
 
   # Get the list of experts and their dimensions
@@ -63,7 +65,7 @@ def train(config):
 
   # Create the datasets
   logger.info("Preparing the dataloaders ...")
-  dataset_types = ["train_sets", "continuous_eval_sets", "final_eval_sets"]
+  dataset_types = ["train_sets", "continuous_eval_sets", "final_eval_sets", "test_sets"]
   data_loaders = {}
   loaded_data = {}
   for dataset_type in dataset_types:
@@ -83,12 +85,20 @@ def train(config):
           ))
 
   # Setup the cross-modal architecture
-  model = config.init(
-      name="arch",
-      module=module_arch,
-      expert_dims=expert_dims,
-      tokenizer=tokenizer,
-  )
+  if config.modified_model:
+      model = config.init(
+          name="arch",
+          module=module_arch2,
+          expert_dims=expert_dims,
+          tokenizer=tokenizer,
+      )
+  else:
+      model = config.init(
+          name="arch",
+          module=module_arch,
+          expert_dims=expert_dims,
+          tokenizer=tokenizer,
+      )
 
   loss = config.init(name="loss", module=module_loss)
   metrics = [getattr(module_metric, met) for met in config["metrics"]]
@@ -128,13 +138,23 @@ def train(config):
                                                    False),
       expert_dims=expert_dims,
       tokenizer=tokenizer,
-      warmup_iterations=warmup_iterations)
+      warmup_iterations=warmup_iterations,
+      modal_num = config.modal_num
+  )
 
   if not config.only_eval:
     logger.info("Training ...")
     trainer.train()
   logger.info("Final evaluation ...")
   trainer.evaluate()
+  if config.sentence:
+    trainer.test(sentence)
+
+    curr_time = 'best_similar/search_' + datetime.datetime.now().strftime("%Y-%m-%d-%H-%M") + '.txt'
+    results_path = config.save_dir / curr_time
+    results = open(results_path, 'a')
+    results.write(sentence)
+    results.close()
   duration = time.strftime("%Hh%Mm%Ss", time.gmtime(time.time() - tic))
   logger.info("Script took %s", duration)
 
@@ -154,17 +174,18 @@ def main_train(raw_args=None):
                       default=None,
                       type=str,
                       help="config file path (default: None)")
-  parser.add_argument(
-      "--resume",
-      default=None,
-      type=str,
-      help="path to the experiment dir to resume (default: None)")
+  parser.add_argument("--resume",
+                      default=None,
+                      type=str,
+                      help="path to the experiment dir to resume (default: None)")
   parser.add_argument("--load_checkpoint",
                       default=None,
                       type=str,
                       help="path to the checkpoint to load (default: None)")
   parser.add_argument("--device", type=str, help="indices of GPUs to enable")
   parser.add_argument("--only_eval", action="store_true")
+  parser.add_argument("--sentence", action="store_true")
+  parser.add_argument("--modified_model", action="store_true")
   parser.add_argument("-v",
                       "--verbose",
                       help="increase output verbosity",
@@ -178,7 +199,9 @@ def main_train(raw_args=None):
       " no checkpoints will be saved.")
   assert args["trainer"]["epochs"] >= args["trainer"]["save_period"], msg
 
-  train(config=args)
+  sentence = "a man drives a red indianapolis 500 type race car around an asphalt track"
+
+  train(config=args, sentence=sentence)
 
 
 if __name__ == "__main__":

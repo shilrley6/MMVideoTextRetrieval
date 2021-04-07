@@ -28,7 +28,7 @@ This repository provides different video text retrieval methods.
   
 
 ## Demo
-
+  We provide a way to produce text-to-video retrieval in real-world applications. Before retrieval, the multi-model features of videos should be extracted and stored. The searched text is defined in the "main_train" function in demo.py, and the config "--sentence" should be used to activate the retrieval process. The outputs of the retrieval are the name of video feature files of the top 10 similar videos.
 
 
 ## Benchmark
