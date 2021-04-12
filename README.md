@@ -163,6 +163,8 @@ supported methods for Video Text retrieval.
 
 - [x] MMT (ECCV'2020)
 
+- [x] MMT-modified (TBD)
+
 - [ ] HGR (CVPR'2020)
 
 
